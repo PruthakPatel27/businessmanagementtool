@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberPro - Management System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            padding: 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            background: #f8fafc;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        /* Cards and Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-title {
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0.5rem 0;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            color: #10b981;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Charts - Fixed sizing */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            height: 400px; /* Fixed height to prevent expansion */
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Fixed height */
+            width: 100%;
+        }
+
+        .chart-container canvas {
+            max-height: 300px !important; /* Prevent canvas expansion */
+        }
+
+        /* Pie chart specific styling */
+        .pie-chart-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            height: 450px; /* Smaller height for pie chart */
+            max-width: 500px; /* Limit width */
+            margin: 0 auto; /* Center the pie chart */
+        }
+
+        .pie-chart-container {
+            position: relative;
+            height: 350px; /* Smaller height for pie chart */
+            width: 100%;
+        }
+
+        .pie-chart-container canvas {
+            max-height: 350px !important;
+            max-width: 100% !important;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .action-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(-2rem);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .close-modal {
+            width: 2rem;
+            height: 2rem;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 1.2rem;
+        }
+
+        .close-modal:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Schedule Grid */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 100px repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .time-slot {
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 0.375rem;
+            text-align: center;
+            font-size: 0.875rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .time-slot.header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+
+        .time-slot.booked {
+            background: #10b981;
+            color: white;
+            cursor: pointer;
+        }
+
+        .time-slot.available {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .time-slot.available:hover {
+            background: #e0e7ff;
+        }
+
+        /* Utility Classes */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-grid {
+                grid-template-columns: 80px repeat(7, 1fr);
+                font-size: 0.75rem;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">✂️</div>
+                    <div class="logo-text">BarberPro</div>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="showSection(event, 'dashboard')">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'appointments')">
+                    <span class="nav-icon">📅</span>
+                    <span>Appointments</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'sales')">
+                    <span class="nav-icon">💰</span>
+                    <span>Sales</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'staff')">
+                    <span class="nav-icon">👥</span>
+                    <span>Staff</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'inventory')">
+                    <span class="nav-icon">📦</span>
+                    <span>Inventory</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'customers')">
+                    <span class="nav-icon">👤</span>
+                    <span>Customers</span>
+                </div>
+                <div class="nav-item" onclick="showSection(event, 'reports')">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <p id="pageSubtitle">Welcome to your barbershop management system</p>
+            </div>
+
+            <div class="content">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section active">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Total Revenue</div>
+                                <select class="filter-select" id="revenueFilter" onchange="updateRevenueDisplay()">
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month" selected>This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="stat-value">₹<span id="revenueValue">12,500</span></div>
+                            <div class="stat-trend">
+                                <span>↗</span>
+                                <span>+12% from last period</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Total Appointments</div>
+                                <select class="filter-select" id="appointmentFilter" onchange="updateAppointmentDisplay()">
+                                    <option value="today" selected>Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                </select>
+                            </div>
+                            <div class="stat-value" id="appointmentValue">24</div>
+                            <div style="font-size: 0.875rem; margin-top: 0.25rem;" id="appointmentDetails">
+                                <span style="color: #10b981;">18 completed</span> • 
+                                <span style="color: #f59e0b;">4 pending</span> • 
+                                <span style="color: #ef4444;">2 cancelled</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Active Staff</div>
+                                <select class="filter-select" id="staffFilter" onchange="updateStaffDisplay()">
+                                    <option value="today" selected>Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                </select>
+                            </div>
+                            <div class="stat-value" id="staffValue">8</div>
+                            <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">
+                                Staff with appointments
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-title">Customer Satisfaction</div>
+                                <select class="filter-select" id="satisfactionFilter" onchange="updateSatisfactionDisplay()">
+                                    <option value="overall">Overall</option>
+                                    <option value="top5" selected>Top 5 Barbers</option>
+                                </select>
+                            </div>
+                            <div class="stat-value" id="satisfactionValue">4.7 ⭐</div>
+                            <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;" id="satisfactionDetails">
+                                Based on 324 reviews
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <div class="action-card" onclick="openModal('appointmentModal')">
+                            <div class="action-icon">📅</div>
+                            <div class="action-title">New Appointment</div>
+                        </div>
+                        <div class="action-card" onclick="openModal('saleModal')">
+                            <div class="action-icon">💰</div>
+                            <div class="action-title">Record Sale</div>
+                        </div>
+                        <div class="action-card" onclick="showSection(event, 'staff')">
+                            <div class="action-icon">👥</div>
+                            <div class="action-title">Manage Staff</div>
+                        </div>
+                        <div class="action-card" onclick="showSection(event, 'reports')">
+                            <div class="action-icon">📊</div>
+                            <div class="action-title">View Reports</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="chart-grid">
+                        <div class="chart-card">
+                            <h3 class="chart-title">Appointments by Service</h3>
+                            <div class="chart-container">
+                                <canvas id="serviceChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3 class="chart-title">Appointments by Barber</h3>
+                            <div class="chart-container">
+                                <canvas id="barberChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3 class="chart-title">Weekly Sales Trend</h3>
+                        <div class="chart-container">
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointments Section -->
+                <div id="appointments" class="section">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">Appointment Management</h2>
+                            <button class="btn btn-primary" onclick="openModal('appointmentModal')">
+                                + New Appointment
+                            </button>
+                        </div>
+                        <table id="appointmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Barber</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Appointments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="chart-card" style="margin-top: 2rem;">
+                        <h3 class="chart-title">Weekly Schedule</h3>
+                        <div class="schedule-grid" id="scheduleGrid">
+                            <!-- Schedule grid will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Section -->
+                <div id="sales" class="section">
+                    <div class="stats-grid" style="margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <div class="stat-title">Today's Sales</div>
+                            <div class="stat-value">₹<span id="todaySales">850</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">This Week</div>
+                            <div class="stat-value">₹<span id="weekSales">3,200</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">This Month</div>
+                            <div class="stat-value">₹<span id="monthSales">12,500</span></div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">Sales & Transactions</h2>
+                            <button class="btn btn-primary" onclick="openModal('saleModal')">
+                                + Record Sale
+                            </button>
+                        </div>
+                        <table id="salesTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Service</th>
+                                    <th>Barber</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Sales will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Staff Section -->
+                <div id="staff" class="section">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">Staff Management</h2>
+                            <button class="btn btn-primary" onclick="openModal('staffModal')">
+                                + Add Staff Member
+                            </button>
+                        </div>
+                        <table id="staffTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Phone</th>
+                                    <th>Schedule</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Staff will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Inventory Section -->
+                <div id="inventory" class="section">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">Inventory Management</h2>
+                            <button class="btn btn-primary" onclick="openModal('inventoryModal')">
+                                + Add Item
+                            </button>
+                        </div>
+                        <table id="inventoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Min Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Inventory will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Customers Section -->
+                <div id="customers" class="section">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h2 class="table-title">Customer Management</h2>
+                            <button class="btn btn-primary" onclick="openModal('customerModal')">
+                                + Add Customer
+                            </button>
+                        </div>
+                        <table id="customersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Visits</th>
+                                    <th>Last Visit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Customers will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reports" class="section">
+                    <div class="stats-grid" style="margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <div class="stat-title">Monthly Revenue</div>
+                            <div class="stat-value">₹<span id="monthlyRevenue">12,500</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Top Service</div>
+                            <div class="stat-value">Haircut</div>
+                            <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">245 services this month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Top Barber</div>
+                            <div class="stat-value">Rajesh Kumar</div>
+                            <div style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">₹3,450 revenue</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Average Ticket</div>
+                            <div class="stat-value">₹350</div>
+                            <div class="stat-trend">
+                                <span>↗</span>
+                                <span>+5% from last month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pie-chart-card">
+                        <h3 class="chart-title">Service Distribution</h3>
+                        <div class="pie-chart-container">
+                            <canvas id="serviceDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">New Appointment</h2>
+                <button class="close-modal" onclick="closeModal('appointmentModal')">×</button>
+            </div>
+            <form onsubmit="saveAppointment(event)">
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="appointmentCustomer" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="appointmentPhone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Service</label>
+                    <select class="form-input" id="appointmentService" required>
+                        <option value="">Select Service</option>
+                        <option value="Haircut">Haircut - ₹300</option>
+                        <option value="Beard Trim">Beard Trim - ₹200</option>
+                        <option value="Hair + Beard">Hair + Beard - ₹450</option>
+                        <option value="Shave">Shave - ₹250</option>
+                        <option value="Hair Color">Hair Color - ₹500</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Barber</label>
+                    <select class="form-input" id="appointmentBarber" required>
+                        <option value="">Select Barber</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="appointmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Time</label>
+                    <input type="time" class="form-input" id="appointmentTime" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Save Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Record Sale</h2>
+                <button class="close-modal" onclick="closeModal('saleModal')">×</button>
+            </div>
+            <form onsubmit="saveSale(event)">
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-input" id="saleCustomer" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Service</label>
+                    <select class="form-input" id="saleService" onchange="updateSaleAmount()" required>
+                        <option value="">Select Service</option>
+                        <option value="Haircut" data-price="300">Haircut - ₹300</option>
+                        <option value="Beard Trim" data-price="200">Beard Trim - ₹200</option>
+                        <option value="Hair + Beard" data-price="450">Hair + Beard - ₹450</option>
+                        <option value="Shave" data-price="250">Shave - ₹250</option>
+                        <option value="Hair Color" data-price="500">Hair Color - ₹500</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Barber</label>
+                    <select class="form-input" id="saleBarber" required>
+                        <option value="">Select Barber</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount (₹)</label>
+                    <input type="number" class="form-input" id="saleAmount" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-input" id="salePayment" required>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                        <option value="Paytm">Paytm</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Record Sale</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Staff Member</h2>
+                <button class="close-modal" onclick="closeModal('staffModal')">×</button>
+            </div>
+            <form onsubmit="saveStaff(event)">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="staffName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select class="form-input" id="staffRole" required>
+                        <option value="Barber">Barber</option>
+                        <option value="Senior Barber">Senior Barber</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Receptionist">Receptionist</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="staffPhone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="staffEmail" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Schedule</label>
+                    <input type="text" class="form-input" id="staffSchedule" placeholder="e.g., Mon-Fri 9AM-6PM" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Add Staff Member</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Inventory Item</h2>
+                <button class="close-modal" onclick="closeModal('inventoryModal')">×</button>
+            </div>
+            <form onsubmit="saveInventory(event)">
+                <div class="form-group">
+                    <label class="form-label">Item Name</label>
+                    <input type="text" class="form-input" id="inventoryName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-input" id="inventoryCategory" required>
+                        <option value="Hair Products">Hair Products</option>
+                        <option value="Shaving">Shaving</option>
+                        <option value="Tools">Tools</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-input" id="inventoryQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Minimum Stock Level</label>
+                    <input type="number" class="form-input" id="inventoryMinStock" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Customer</h2>
+                <button class="close-modal" onclick="closeModal('customerModal')">×</button>
+            </div>
+            <form onsubmit="saveCustomer(event)">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="customerPhone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="customerEmail">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" id="customerNotes" rows="3" placeholder="Preferred styles, allergies, etc."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Add Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data storage with Indian context
+        let data = {
+            appointments: [
+                { id: 1, customer: 'Arjun Sharma', phone: '9876543210', service: 'Haircut', barber: 'Rajesh Kumar', date: '2025-08-12', time: '09:00', status: 'Confirmed' },
+                { id: 2, customer: 'Priya Singh', phone: '9876543211', service: 'Hair Color', barber: 'Suresh Patel', date: '2025-08-12', time: '10:30', status: 'Confirmed' },
+                { id: 3, customer: 'Vikram Gupta', phone: '9876543212', service: 'Hair + Beard', barber: 'Amit Verma', date: '2025-08-12', time: '14:00', status: 'Pending' }
+            ],
+            sales: [
+                { id: 1, date: '2025-08-12T09:45:00', customer: 'Arjun Sharma', service: 'Haircut', barber: 'Rajesh Kumar', amount: '300', payment: 'UPI' },
+                { id: 2, date: '2025-08-12T11:15:00', customer: 'Rohit Mehta', service: 'Beard Trim', barber: 'Suresh Patel', amount: '200', payment: 'Cash' },
+                { id: 3, date: '2025-08-11T16:30:00', customer: 'Karan Joshi', service: 'Hair + Beard', barber: 'Amit Verma', amount: '450', payment: 'Paytm' }
+            ],
+            staff: [
+                { name: 'Rajesh Kumar', role: 'Senior Barber', phone: '9876543201', email: 'rajesh@barbershop.com', schedule: 'Mon-Fri 9AM-6PM', status: 'Active' },
+                { name: 'Suresh Patel', role: 'Barber', phone: '9876543202', email: 'suresh@barbershop.com', schedule: 'Tue-Sat 10AM-7PM', status: 'Active' },
+                { name: 'Amit Verma', role: 'Barber', phone: '9876543203', email: 'amit@barbershop.com', schedule: 'Mon-Fri 9AM-6PM', status: 'Active' },
+                { name: 'Deepak Sharma', role: 'Junior Barber', phone: '9876543204', email: 'deepak@barbershop.com', schedule: 'Wed-Sun 11AM-8PM', status: 'Active' }
+            ],
+            inventory: [
+                { name: 'Hair Gel', category: 'Hair Products', quantity: 25, minStock: 10 },
+                { name: 'Shaving Cream', category: 'Shaving', quantity: 15, minStock: 5 },
+                { name: 'Hair Clippers', category: 'Tools', quantity: 8, minStock: 3 },
+                { name: 'Beard Oil', category: 'Hair Products', quantity: 20, minStock: 8 },
+                { name: 'Sanitizer', category: 'Cleaning', quantity: 6, minStock: 8 }
+            ],
+            customers: [
+                { name: 'Arjun Sharma', phone: '9876543210', email: 'arjun@email.com', visits: 12, lastVisit: '2025-08-12', notes: 'Prefers fade cuts' },
+                { name: 'Priya Singh', phone: '9876543211', email: 'priya@email.com', visits: 8, lastVisit: '2025-08-10', notes: 'Hair color specialist' },
+                { name: 'Vikram Gupta', phone: '9876543212', email: 'vikram@email.com', visits: 15, lastVisit: '2025-08-09', notes: 'Regular beard trim' }
+            ]
+        };
+
+        // Chart instances
+        let charts = {};
+
+        // Dashboard data for filters
+        const dashboardData = {
+            revenue: {
+                today: 850,
+                week: 3200,
+                month: 12500,
+                year: 145000
+            },
+            appointments: {
+                today: { total: 24, completed: 18, pending: 4, cancelled: 2 },
+                week: { total: 156, completed: 132, pending: 18, cancelled: 6 },
+                month: { total: 680, completed: 598, pending: 52, cancelled: 30 }
+            },
+            staff: {
+                today: 8,
+                week: 12,
+                month: 15
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDashboard();
+            populateBarberSelects();
+            generateScheduleGrid();
+            
+            // Delay chart initialization to ensure proper sizing
+            setTimeout(() => {
+                initializeCharts();
+            }, 100);
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').value = today;
+        });
+
+        // Load data from localStorage
+        function loadData() {
+            const savedData = localStorage.getItem('barbershopData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                data = { ...data, ...parsed };
+            }
+            updateAllTables();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('barbershopData', JSON.stringify(data));
+        }
+
+        // Navigation - Fixed
+        function showSection(event, sectionId) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'Dashboard',
+                appointments: 'Appointments',
+                sales: 'Sales',
+                staff: 'Staff',
+                inventory: 'Inventory', 
+                customers: 'Customers',
+                reports: 'Reports'
+            };
+            
+            const subtitles = {
+                dashboard: 'Welcome to your barbershop management system',
+                appointments: 'Manage your daily appointments and schedule',
+                sales: 'Track sales and revenue performance',
+                staff: 'Manage your team and staff schedules',
+                inventory: 'Monitor stock levels and supplies',
+                customers: 'Manage customer relationships and history',
+                reports: 'Analyze performance and generate reports'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[sectionId];
+            document.getElementById('pageSubtitle').textContent = subtitles[sectionId];
+            
+            // Update tables when switching tabs
+            updateAllTables();
+        }
+
+        // Dashboard filter functions - Fixed
+        function updateRevenueDisplay() {
+            const filter = document.getElementById('revenueFilter').value;
+            const value = dashboardData.revenue[filter];
+            document.getElementById('revenueValue').textContent = value.toLocaleString();
+        }
+
+        function updateAppointmentDisplay() {
+            const filter = document.getElementById('appointmentFilter').value;
+            const appointmentData = dashboardData.appointments[filter];
+            document.getElementById('appointmentValue').textContent = appointmentData.total;
+            document.getElementById('appointmentDetails').innerHTML = 
+                `<span style="color: #10b981;">${appointmentData.completed} completed</span> • <span style="color: #f59e0b;">${appointmentData.pending} pending</span> • <span style="color: #ef4444;">${appointmentData.cancelled} cancelled</span>`;
+        }
+
+        function updateStaffDisplay() {
+            const filter = document.getElementById('staffFilter').value;
+            const value = dashboardData.staff[filter];
+            document.getElementById('staffValue').textContent = value;
+        }
+
+        function updateSatisfactionDisplay() {
+            const filter = document.getElementById('satisfactionFilter').value;
+            const valueElement = document.getElementById('satisfactionValue');
+            const detailsElement = document.getElementById('satisfactionDetails');
+            
+            if (filter === 'overall') {
+                valueElement.textContent = '4.7⭐';
+                detailsElement.textContent = 'Based on 324 reviews';
+            } else {
+                valueElement.innerHTML = `
+                    <div style="font-size: 0.8em; line-height: 1.2;">
+                        <div>Rajesh: 4.8⭐</div>
+                        <div>Suresh: 4.6⭐</div>
+                        <div>Amit: 4.7⭐</div>
+                    </div>
+                `;
+                detailsElement.textContent = 'Top performers this month';
+            }
+        }
+
+        // Initialize Charts - Fixed sizing issues
+        function initializeCharts() {
+            // Destroy existing charts to prevent duplication
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            // Service Chart
+            const serviceCtx = document.getElementById('serviceChart');
+            if (serviceCtx) {
+                charts.serviceChart = new Chart(serviceCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Haircut', 'Beard Trim', 'Hair + Beard', 'Shave', 'Hair Color'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [45, 32, 28, 18, 15],
+                            backgroundColor: '#667eea',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Barber Chart
+            const barberCtx = document.getElementById('barberChart');
+            if (barberCtx) {
+                charts.barberChart = new Chart(barberCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Rajesh', 'Suresh', 'Amit', 'Deepak'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [42, 38, 35, 28],
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Sales Trend Chart
+            const salesTrendCtx = document.getElementById('salesTrendChart');
+            if (salesTrendCtx) {
+                charts.salesTrendChart = new Chart(salesTrendCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Sales (₹)',
+                            data: [1200, 1450, 1100, 1600, 2100, 2800, 1950],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // Service Distribution Chart (Pie) - Fixed sizing
+            const serviceDistCtx = document.getElementById('serviceDistributionChart');
+            if (serviceDistCtx) {
+                charts.serviceDistributionChart = new Chart(serviceDistCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Haircut', 'Beard Trim', 'Hair + Beard', 'Shave', 'Hair Color'],
+                        datasets: [{
+                            data: [45, 32, 28, 18, 15],
+                            backgroundColor: [
+                                '#667eea',
+                                '#ef4444',
+                                '#10b981',
+                                '#f59e0b',
+                                '#8b5cf6'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Update dashboard
+        function updateDashboard() {
+            updateSalesStats();
+        }
+
+        // Update sales statistics
+        function updateSalesStats() {
+            const today = new Date();
+            const todayStr = today.toDateString();
+            
+            // Today's sales
+            const todaySales = data.sales
+                .filter(sale => new Date(sale.date).toDateString() === todayStr)
+                .reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
+            
+            // This week's sales
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const weekSales = data.sales
+                .filter(sale => new Date(sale.date) >= weekStart)
+                .reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
+            
+            // This month's sales
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const monthSales = data.sales
+                .filter(sale => new Date(sale.date) >= monthStart)
+                .reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
+            
+            // Update displays
+            const elements = ['todaySales', 'weekSales', 'monthSales', 'monthlyRevenue'];
+            const values = [todaySales, weekSales, monthSales, monthSales];
+            
+            elements.forEach((elementId, index) => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = values[index].toFixed(0);
+                }
+            });
+        }
+
+        // Rest of the functions remain the same...
+        // Populate barber select dropdowns
+        function populateBarberSelects() {
+            const barberSelects = ['appointmentBarber', 'saleBarber'];
+            barberSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Select Barber</option>';
+                    data.staff
+                        .filter(s => s.role.includes('Barber'))
+                        .forEach(barber => {
+                            const option = document.createElement('option');
+                            option.value = barber.name;
+                            option.textContent = barber.name;
+                            select.appendChild(option);
+                        });
+                }
+            });
+        }
+
+        // Form submission functions
+        function saveAppointment(event) {
+            event.preventDefault();
+            
+            const appointment = {
+                id: Date.now(),
+                customer: document.getElementById('appointmentCustomer').value,
+                phone: document.getElementById('appointmentPhone').value,
+                service: document.getElementById('appointmentService').value,
+                barber: document.getElementById('appointmentBarber').value,
+                date: document.getElementById('appointmentDate').value,
+                time: document.getElementById('appointmentTime').value,
+                status: 'Confirmed'
+            };
+            
+            data.appointments.push(appointment);
+            saveData();
+            updateAllTables();
+            closeModal('appointmentModal');
+            
+            // Reset form
+            event.target.reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').value = today;
+            
+            showNotification('Appointment booked successfully!');
+        }
+
+        function saveSale(event) {
+            event.preventDefault();
+            
+            const sale = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                customer: document.getElementById('saleCustomer').value,
+                service: document.getElementById('saleService').value,
+                barber: document.getElementById('saleBarber').value,
+                amount: document.getElementById('saleAmount').value,
+                payment: document.getElementById('salePayment').value
+            };
+            
+            data.sales.push(sale);
+            saveData();
+            updateAllTables();
+            updateDashboard();
+            closeModal('saleModal');
+            
+            // Reset form
+            event.target.reset();
+            
+            showNotification('Sale recorded successfully!');
+        }
+
+        function updateSaleAmount() {
+            const select = document.getElementById('saleService');
+            const selectedOption = select.options[select.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            if (price) {
+                document.getElementById('saleAmount').value = price;
+            }
+        }
+
+        function saveStaff(event) {
+            event.preventDefault();
+            
+            const staff = {
+                name: document.getElementById('staffName').value,
+                role: document.getElementById('staffRole').value,
+                phone: document.getElementById('staffPhone').value,
+                email: document.getElementById('staffEmail').value,
+                schedule: document.getElementById('staffSchedule').value,
+                status: 'Active'
+            };
+            
+            data.staff.push(staff);
+            saveData();
+            updateAllTables();
+            populateBarberSelects();
+            closeModal('staffModal');
+            
+            // Reset form
+            event.target.reset();
+            
+            showNotification('Staff member added successfully!');
+        }
+
+        function saveInventory(event) {
+            event.preventDefault();
+            
+            const item = {
+                name: document.getElementById('inventoryName').value,
+                category: document.getElementById('inventoryCategory').value,
+                quantity: parseInt(document.getElementById('inventoryQuantity').value),
+                minStock: parseInt(document.getElementById('inventoryMinStock').value)
+            };
+            
+            data.inventory.push(item);
+            saveData();
+            updateAllTables();
+            closeModal('inventoryModal');
+            
+            // Reset form
+            event.target.reset();
+            
+            showNotification('Inventory item added successfully!');
+        }
+
+        function saveCustomer(event) {
+            event.preventDefault();
+            
+            const customer = {
+                name: document.getElementById('customerName').value,
+                phone: document.getElementById('customerPhone').value,
+                email: document.getElementById('customerEmail').value,
+                notes: document.getElementById('customerNotes').value,
+                visits: 0,
+                lastVisit: new Date().toISOString().split('T')[0]
+            };
+            
+            data.customers.push(customer);
+            saveData();
+            updateAllTables();
+            closeModal('customerModal');
+            
+            // Reset form
+            event.target.reset();
+            
+            showNotification('Customer added successfully!');
+        }
+
+        // Update all tables
+        function updateAllTables() {
+            updateAppointmentsTable();
+            updateSalesTable();
+            updateStaffTable();
+            updateInventoryTable();
+            updateCustomersTable();
+        }
+
+        // Update appointments table
+        function updateAppointmentsTable() {
+            const tbody = document.querySelector('#appointmentsTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            // Sort appointments by date and time
+            const sortedAppointments = [...data.appointments].sort((a, b) => {
+                const dateA = new Date(a.date + ' ' + a.time);
+                const dateB = new Date(b.date + ' ' + b.time);
+                return dateA - dateB;
+            });
+            
+            sortedAppointments.forEach(apt => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${apt.time}</td>
+                    <td>${apt.customer}</td>
+                    <td>${apt.service}</td>
+                    <td>${apt.barber}</td>
+                    <td><span class="badge ${apt.status === 'Confirmed' ? 'badge-success' : apt.status === 'Pending' ? 'badge-warning' : 'badge-danger'}">${apt.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="completeAppointment(${apt.id})">Complete</button>
+                        <button class="btn btn-sm btn-danger" onclick="cancelAppointment(${apt.id})">Cancel</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update sales table
+        function updateSalesTable() {
+            const tbody = document.querySelector('#salesTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            // Sort sales by date (newest first)
+            const sortedSales = [...data.sales].sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
+            });
+            
+            sortedSales.forEach((sale, index) => {
+                const row = tbody.insertRow();
+                const date = new Date(sale.date);
+                row.innerHTML = `
+                    <td>${date.toLocaleDateString()}</td>
+                    <td>${sale.customer}</td>
+                    <td>${sale.service}</td>
+                    <td>${sale.barber}</td>
+                    <td>₹${parseFloat(sale.amount).toFixed(0)}</td>
+                    <td><span class="badge badge-info">${sale.payment}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSale(${sale.id})">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update staff table
+        function updateStaffTable() {
+            const tbody = document.querySelector('#staffTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            data.staff.forEach((staff, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${staff.name}</td>
+                    <td>${staff.role}</td>
+                    <td>${staff.phone}</td>
+                    <td>${staff.schedule}</td>
+                    <td><span class="badge ${staff.status === 'Active' ? 'badge-success' : 'badge-warning'}">${staff.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleStaffStatus(${index})">${staff.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStaff(${index})">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update inventory table
+        function updateInventoryTable() {
+            const tbody = document.querySelector('#inventoryTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            data.inventory.forEach((item, index) => {
+                const status = item.quantity <= item.minStock ? 'Low Stock' : 'In Stock';
+                const statusClass = item.quantity <= item.minStock ? 'badge-danger' : 'badge-success';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.minStock}</td>
+                    <td><span class="badge ${statusClass}">${status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="updateInventoryQuantity(${index})">Update Qty</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteInventoryItem(${index})">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update customers table
+        function updateCustomersTable() {
+            const tbody = document.querySelector('#customersTable tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            data.customers.forEach((customer, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${customer.name}</td>
+                    <td>${customer.phone}</td>
+                    <td>${customer.email || 'N/A'}</td>
+                    <td>${customer.visits}</td>
+                    <td>${customer.lastVisit}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewCustomerHistory(${index})">View History</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${index})">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Generate schedule grid
+        function generateScheduleGrid() {
+            const grid = document.getElementById('scheduleGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            // Days header
+            const days = ['Time', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            days.forEach(day => {
+                const cell = document.createElement('div');
+                cell.className = 'time-slot header';
+                cell.textContent = day;
+                grid.appendChild(cell);
+            });
+            
+            // Time slots
+            const times = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
+            times.forEach(time => {
+                // Time label
+                const timeLabel = document.createElement('div');
+                timeLabel.className = 'time-slot header';
+                timeLabel.textContent = time;
+                grid.appendChild(timeLabel);
+                
+                // Day slots
+                for (let i = 0; i < 7; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'time-slot';
+                    
+                    // Check if there's an appointment (demo logic)
+                    const hasAppointment = Math.random() > 0.7;
+                    if (hasAppointment) {
+                        slot.className += ' booked';
+                        slot.textContent = 'Booked';
+                    } else {
+                        slot.className += ' available';
+                        slot.textContent = 'Available';
+                        slot.onclick = () => {
+                            openModal('appointmentModal');
+                            // Pre-fill time if possible
+                            const timeInput = document.getElementById('appointmentTime');
+                            if (timeInput) {
+                                const hour24 = time.includes('PM') && !time.startsWith('12') ? 
+                                    parseInt(time.split(':')[0]) + 12 : 
+                                    parseInt(time.split(':')[0]);
+                                timeInput.value = `${hour24.toString().padStart(2, '0')}:00`;
+                            }
+                        };
+                    }
+                    
+                    grid.appendChild(slot);
+                }
+            });
+        }
+
+        // Action functions
+        function completeAppointment(id) {
+            const apt = data.appointments.find(a => a.id === id);
+            if (apt) {
+                // Create a sale from the appointment
+                const sale = {
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    customer: apt.customer,
+                    service: apt.service,
+                    barber: apt.barber,
+                    amount: getServicePrice(apt.service),
+                    payment: 'Cash'
+                };
+                
+                data.sales.push(sale);
+                
+                // Remove appointment
+                data.appointments = data.appointments.filter(a => a.id !== id);
+                
+                saveData();
+                updateAllTables();
+                updateDashboard();
+                
+                showNotification('Appointment completed and sale recorded!');
+            }
+        }
+
+        function cancelAppointment(id) {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                data.appointments = data.appointments.filter(a => a.id !== id);
+                saveData();
+                updateAllTables();
+                showNotification('Appointment cancelled');
+            }
+        }
+
+        function toggleStaffStatus(index) {
+            data.staff[index].status = data.staff[index].status === 'Active' ? 'Inactive' : 'Active';
+            saveData();
+            updateAllTables();
+            updateDashboard();
+            showNotification(`Staff member ${data.staff[index].status.toLowerCase()}`);
+        }
+
+        function deleteStaff(index) {
+            if (confirm('Are you sure you want to delete this staff member?')) {
+                const staffName = data.staff[index].name;
+                data.staff.splice(index, 1);
+                saveData();
+                updateAllTables();
+                populateBarberSelects();
+                showNotification(`${staffName} deleted`);
+            }
+        }
+
+        function updateInventoryQuantity(index) {
+            const newQty = prompt('Enter new quantity:', data.inventory[index].quantity);
+            if (newQty !== null && !isNaN(newQty) && parseInt(newQty) >= 0) {
+                data.inventory[index].quantity = parseInt(newQty);
+                saveData();
+                updateAllTables();
+                showNotification('Inventory updated');
+            }
+        }
+
+        function deleteInventoryItem(index) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                const itemName = data.inventory[index].name;
+                data.inventory.splice(index, 1);
+                saveData();
+                updateAllTables();
+                showNotification(`${itemName} deleted`);
+            }
+        }
+
+        function deleteSale(saleId) {
+            if (confirm('Are you sure you want to delete this sale record?')) {
+                // Find the sale to get customer name for notification
+                const sale = data.sales.find(s => s.id === saleId);
+                const customerName = sale ? sale.customer : 'Sale';
+                
+                // Remove the sale
+                data.sales = data.sales.filter(s => s.id !== saleId);
+                saveData();
+                updateAllTables();
+                updateDashboard(); // Update dashboard stats after deletion
+                showNotification(`${customerName}'s sale record deleted`);
+            }
+        }
+
+        function deleteCustomer(index) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                const customerName = data.customers[index].name;
+                data.customers.splice(index, 1);
+                saveData();
+                updateAllTables();
+                showNotification(`${customerName} deleted`);
+            }
+        }
+
+        function viewCustomerHistory(index) {
+            const customer = data.customers[index];
+            const history = data.sales.filter(s => s.customer === customer.name);
+            
+            let historyText = `Customer: ${customer.name}\nPhone: ${customer.phone}\nEmail: ${customer.email || 'N/A'}\nTotal Visits: ${customer.visits}\nNotes: ${customer.notes || 'None'}\n\nService History:\n`;
+            
+            if (history.length === 0) {
+                historyText += '\nNo service history found.';
+            } else {
+                history.forEach(sale => {
+                    const date = new Date(sale.date);
+                    historyText += `\n${date.toLocaleDateString()} - ${sale.service} by ${sale.barber} - ₹${sale.amount}`;
+                });
+            }
+            
+            alert(historyText);
+        }
+
+        // Helper function to get service price
+        function getServicePrice(service) {
+            const prices = {
+                'Haircut': '300',
+                'Beard Trim': '200',
+                'Hair + Beard': '450',
+                'Shave': '250',
+                'Hair Color': '500'
+            };
+            return prices[service.split(' - ')[0]] || '300';
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-left: 4px solid #10b981;
+                border-radius: 0.5rem;
+                padding: 1rem 1.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                z-index: 3000;
+                animation: slideIn 0.3s ease;
+                max-width: 400px;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: #10b981;">✓</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                const modalId = event.target.id;
+                closeModal(modalId);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // ESC to close modals
+            if (event.key === 'Escape') {
+                const activeModal = document.querySelector('.modal.active');
+                if (activeModal) {
+                    closeModal(activeModal.id);
+                }
+            }
+            
+            // Ctrl/Cmd + N for new appointment
+            if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+                event.preventDefault();
+                openModal('appointmentModal');
+            }
+        });
+
+        // Add animation styles
+        const additionalStyles = document.createElement('style');
+        additionalStyles.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(additionalStyles);
+
+        // Initialize everything when page loads
+        window.addEventListener('load', function() {
+            updateDashboard();
+            showNotification('BarberPro Management System loaded successfully!');
+        });
+
+        // Prevent chart canvas from expanding on scroll - Additional fix
+        window.addEventListener('resize', function() {
+            // Reinitialize charts on window resize to maintain proper sizing
+            setTimeout(() => {
+                initializeCharts();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
