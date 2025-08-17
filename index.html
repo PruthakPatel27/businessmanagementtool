@@ -1364,12 +1364,13 @@
             
             document.getElementById('currentWeekDisplay').textContent = weekDisplay;
             
-            // Update button states - no limits, always enabled
+            // Update button states
             const prevBtn = document.getElementById('prevWeekBtn');
             const nextBtn = document.getElementById('nextWeekBtn');
             
-            prevBtn.disabled = false;
-            nextBtn.disabled = false;
+            // Allow going back 4 weeks and forward 4 weeks
+            prevBtn.disabled = currentWeekOffset <= -4;
+            nextBtn.disabled = currentWeekOffset >= 4;
         }
 
         // Load data from localStorage
